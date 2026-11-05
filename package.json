@@ -1,0 +1,89 @@
+{
+  "name": "@plasius/game-runtime",
+  "version": "0.1.0",
+  "description": "Deterministic headless game lifecycle, ordered input and checkpoints for Plasius spatial games",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run && npm run test:privacy",
+    "test:watch": "vitest",
+    "test:privacy": "node --experimental-test-coverage --test-coverage-include=scripts/private-artifact-policy.cjs --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 --test tests/private-artifact-policy.test.cjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "audit:eslint": "npm run lint",
+    "audit:npm": "npm audit --audit-level=high --omit=dev",
+    "test:coverage": "vitest run --coverage && npm run test:privacy",
+    "audit:test": "npm run test:coverage",
+    "privacy:check": "node scripts/verify-private-artifacts.cjs",
+    "pack:check": "npm run privacy:check && node scripts/verify-public-package.cjs",
+    "prepublishOnly": "npm run build && npm run pack:check"
+  },
+  "keywords": [
+    "plasius",
+    "games",
+    "deterministic",
+    "runtime",
+    "typescript"
+  ],
+  "author": "Plasius LTD <development@plasius.co.uk>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Plasius-LTD/game-runtime.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Plasius-LTD/game-runtime/issues"
+  },
+  "homepage": "https://github.com/Plasius-LTD/game-runtime#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.2",
+    "@typescript-eslint/eslint-plugin": "^8.64.0",
+    "@typescript-eslint/parser": "^8.64.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.7.0",
+    "globals": "^17.7.0",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.10"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "funding": [
+    {
+      "type": "patreon",
+      "url": "https://www.patreon.com/c/plasiusltd/membership"
+    },
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/Plasius-LTD"
+    }
+  ],
+  "overrides": {
+    "brace-expansion": "^5.0.9",
+    "esbuild": "^0.28.1",
+    "minimatch": "11.0.1"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "dependencies": {
+    "@plasius/schema": "1.4.9"
+  }
+}
