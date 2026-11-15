@@ -45,12 +45,27 @@ tick/sequence ordering, foreign slots and overfull queues are rejected. Axis
 values are finite in [-1, 1]. Button masks are uint16. Player slots contain no
 account identifiers. Never accept client scores or transforms as authoritative.
 
-`advance` reports completed steps, discarded overload time, interpolation alpha
+`advance` reports completed steps, discarded overload/interruption time, interpolation alpha
 and presentation failure. Defaults allow five catch-up ticks, 256 queued inputs
 and 120 future ticks. Hosts must qualify performance and stop server admission
 on overload; discarded time is not proof of realtime capacity. Pause clears the
 queue and fractional time. Solo browser adapters should pause on backgrounding;
 one online client must not pause the authoritative session for everyone.
+
+Calling `pause` or `dispose` from a hook ends the current batch immediately after
+the last committed tick. A pause followed by a resume in the same callback also
+ends that batch. Remaining elapsed time, including its fraction, is discarded;
+the next explicit `advance` starts without hidden catch-up. Interrupted rules
+and state validation do not commit their candidate state or random stream.
+
+Hooks may read `snapshot`/`status` and call `pause`/`resume`/`dispose`. During a
+rule, migration or host callback, nested `advance`, `restore` and `checkpoint`
+calls throw `runtime-busy`, and `enqueue` returns `inactive`. Restore interrupted
+by a lifecycle change throws `runtime-interrupted` without committing its
+candidate. Lifecycle callbacks can change status, but nested lifecycle
+notifications are suppressed; read `status()` for the final state. Disposal is
+terminal and calls its cleanup hook once. Explicit checkpoint handoff failures
+propagate so hosts cannot accidentally report a failed save as persisted.
 
 Checkpoint state is JSON, limited to 256 KiB UTF-8; the complete envelope is
 limited to 1 MiB. Restore validates identity, slots, sequence watermarks, queue
@@ -80,9 +95,14 @@ Quarantined` runner group. Admit only reviewed, protected/frozen workflow refs;
 no fork execution or alternate hosted CI. Before CD, verify the trusted npm
 publisher, release-preparation App and protected-branch-only `production`
 environment. Publish only via approved `cd.yml` on `main`; never publish locally.
+CD pins npm 11.6.2, validates Node 24.18.0 and npm >=11.5.1, and rechecks current
+main before release mutation and again immediately before npm publication.
+First registration remains gated by [Task #3](https://github.com/Plasius-LTD/game-runtime/issues/3);
+this workflow does not introduce a bootstrap credential or token fallback.
 No publication or ten-hour game qualification is claimed by this foundation.
 
 See [design](docs/design/runtime-foundation.md),
 [ADR 0001](docs/adrs/adr-0001-deterministic-headless-game-runtime.md),
 [bounds TDR](docs/tdrs/tdr-0001-input-and-checkpoint-bounds.md),
+[lifecycle boundaries](docs/design/runtime-reentrancy.md),
 [contributing](CONTRIBUTING.md) and [security](SECURITY.md). Apache-2.0.

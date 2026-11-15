@@ -16,3 +16,16 @@ Randomness is Mulberry32 with an explicit uint32 state, intended only for
 reproducible gameplay, never credentials, invitations or security decisions.
 Presentation hooks receive detached data; their failures produce a bounded
 host result and do not modify rule outcomes. No private state is logged.
+
+Lifecycle interruption discards all unconsumed elapsed time, including the
+fraction. `AdvanceResult.steps` counts committed ticks, while `discardedMs`
+includes both overload and interruption. Every actual lifecycle transition
+changes an identity token rather than an incrementing counter, so a synchronous
+pause/resume cannot continue a stale batch. The per-tick random stream is copied
+before evaluation and detached again at commit to prevent retained references
+from changing subsequent randomness.
+
+Exclusive synchronous operations reject nested advance/restore/checkpoint calls
+and input admission. A finally block releases ownership after success or failure.
+Every host hook also holds this gate, including standalone lifecycle and cleanup
+notifications; snapshot/status reads and lifecycle actions remain available.

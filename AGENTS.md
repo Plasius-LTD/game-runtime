@@ -127,7 +127,7 @@
 - Do not mark merge/release-bearing work complete until the relevant CI and CD gates have succeeded.
 
 ## 14. Package Creation Rules
-- Use `/Users/philliphounslow/plasius/schema` (`@plasius/game-runtime`) as the baseline template when creating new `@plasius/*` packages.
+- Use `/Users/philliphounslow/plasius/schema` (`@plasius/schema`) as the baseline template when creating new `@plasius/*` packages.
 - Copy template runtime/tooling files at project creation: `.nvmrc` and `.npmrc`.
 - Create and maintain required package docs from the start:
   - `README.md`
@@ -155,7 +155,7 @@
 The following repo- or directory-specific guidance from the previous local `AGENTS.md` remains active where it does not conflict with the curated governance above or companion files.
 
 ### Local Notes
-This repo is `@plasius/game-runtime`, a TypeScript schema definition and validation library.
+This repo is `@plasius/game-runtime`, a deterministic headless game lifecycle, input and checkpoint library.
 
 ### Setup
 - Use Node.js 24 (see `.nvmrc`) and npm.

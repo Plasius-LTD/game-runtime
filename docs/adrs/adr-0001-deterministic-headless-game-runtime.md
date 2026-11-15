@@ -19,3 +19,18 @@ own user access. The core has no environment override. Rollback disables new
 sessions without deleting checkpoint data. Schema-template legal/tooling and
 exact-main two-phase CD apply. Package publication requires verified CI, npm OIDC
 binding and a protected production environment; local publishing is forbidden.
+
+## Synchronous ownership clarification — 15 November 2026
+
+Advance, restore and checkpoint operations are exclusive, including host hooks.
+Reject recursive operations with `runtime-busy`; do not implicitly queue them.
+Lifecycle transitions invalidate the outstanding batch even when a hook resumes
+immediately. Prepare state and randomness separately, then commit one complete
+tick only if its lifecycle is unchanged. This prevents callbacks from using
+disposed presentation resources or committing work after a pause.
+
+Lifecycle hooks may change status, but nested notifications are suppressed to
+bound recursion. Disposal remains terminal and cleanup runs once. The detailed
+[boundary contract](../design/runtime-reentrancy.md) defines errors, discarded
+time and regressions. These are core guarantees, independent of browser or
+server presentation; hosts still evaluate `arcade.runtime.enabled`.
