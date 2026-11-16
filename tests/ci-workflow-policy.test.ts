@@ -60,7 +60,7 @@ describe("release workflow trust boundaries", () => {
     expect(result.stdout).toBe("");
   });
 
-  it("uses hosted OIDC publication without npm write tokens", () => {
+  it("uses hosted OIDC publication with no persistent npm write-token fallback", () => {
     expect(cdWorkflow).toContain("runs-on: ubuntu-latest");
     expect(cdWorkflow).toContain("environment: production");
     expect(cdWorkflow).toContain("id-token: write");
