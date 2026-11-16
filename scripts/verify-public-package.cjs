@@ -11,7 +11,9 @@ const {
 
 const EXPECTED_PACKAGE_FILES = Object.freeze(["dist"]);
 
-const EXPECTED_PACKED_PATHS = Object.freeze(["LICENSE", "README.md", "package.json", "dist/index.js", "dist/index.js.map", "dist/index.cjs", "dist/index.cjs.map", "dist/index.d.ts", "dist/index.d.cts"]);
+const ENTRY_NAMES = Object.freeze(["index", "saves", "browser-recovery"]);
+const EXPECTED_PACKED_PATHS = Object.freeze(["LICENSE", "README.md", "package.json", ...ENTRY_NAMES.flatMap(name =>
+  ["js", "js.map", "cjs", "cjs.map", "d.ts", "d.cts"].map(extension => `dist/${name}.${extension}`))]);
 
 
 function main(argv = process.argv.slice(2)) {
@@ -119,14 +121,21 @@ function verifyPackagePathInventory(paths) {
   }
 }
 
-function verifyPackageContents({ packageJson }) {
-  const expected = { types: "./dist/index.d.ts", import: "./dist/index.js", require: "./dist/index.cjs" };
-  if (JSON.stringify(packageJson.exports) !== JSON.stringify({ ".": expected })) {
+function verifyPackageContents({ packageJson }, load = require) {
+  const expected = Object.fromEntries(ENTRY_NAMES.map(name => [name === "index" ? "." : `./${name}`,
+    { types: `./dist/${name}.d.ts`, import: `./dist/${name}.js`, require: `./dist/${name}.cjs` }]));
+  if (JSON.stringify(packageJson.exports) !== JSON.stringify(expected)) {
     throw new Error("Package dual-module exports are incorrect.");
   }
-  const api = require(path.resolve(process.cwd(), "dist/index.cjs"));
-  for (const name of ["createGameRuntime", "createRandom", "parseInput", "parseCheckpoint"]) {
-    if (typeof api[name] !== "function") throw new Error("Required runtime export is missing.");
+  const required = {
+    index: ["createGameRuntime", "createRandom", "parseInput", "parseCheckpoint"],
+    saves: ["createSaveSession"], "browser-recovery": ["createBrowserRecoveryStore"],
+  };
+  for (const entry of ENTRY_NAMES) {
+    const api = load(path.resolve(process.cwd(), `dist/${entry}.cjs`));
+    for (const name of required[entry]) {
+      if (typeof api[name] !== "function") throw new Error("Required runtime export is missing.");
+    }
   }
 }
 
@@ -183,4 +192,5 @@ module.exports = {
   EXPECTED_PACKED_PATHS,
   main,
   verifyPackagePathInventory,
+  verifyPackageContents,
 };

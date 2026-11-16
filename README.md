@@ -73,8 +73,90 @@ and game state before committing. For known older rules/content, supply an
 explicit migration keyed by `sourceRulesVersion/sourceContentVersion`; its
 output must validate under the current rules. Unknown versions remain rejected.
 Keep the original checkpoint when restoration fails. A valid checkpoint is not
-proof of server authority or entitlement. Cloud conflict resolution and browser
-recovery are separate work under Task #2.
+proof of server authority or entitlement.
+
+## Account save recovery
+
+Task [#2](https://github.com/Plasius-LTD/game-runtime/issues/2) adds independent
+`/saves` and `/browser-recovery` entry points. The root import remains headless.
+Reuse the site's authenticated cloud adapter; this package adds no transport,
+credentials or backend authorization. The host evaluates stored
+`arcade.progress.enabled` and the backend capability before creating a session.
+
+```ts
+const { createSaveSession } = await import("@plasius/game-runtime/saves");
+const { createBrowserRecoveryStore } = await import("@plasius/game-runtime/browser-recovery");
+const local = createBrowserRecoveryStore();
+const saves = createSaveSession({ scope: opaqueAccountScope, identity: gameIdentity,
+  local, cloud: authenticatedCloudSaveAdapter, timeoutMs: 5000 });
+const recovery = await saves.load();
+// Present blocked/offline states and validate recovered game state with runtime.restore.
+if (recovery.status === "ready" || recovery.status === "offline") {
+  if (recovery.checkpoint) runtime.restore(recovery.checkpoint);
+  const staged = await saves.stage(runtime.checkpoint());
+  if (staged.status === "stored") {
+    const upload = await saves.flush();
+    // Handle unavailable/conflict outcomes: a local save is not a cloud acknowledgement.
+    showSaveOutcome(upload.status);
+  }
+}
+// On logout/account change, stop callbacks and release this account's session.
+saves.dispose();
+local.dispose();
+```
+
+Each session binds an immutable opaque account scope and game identity. Scopes
+are 1–128 ASCII letters, digits, `_` or `-`; never use emails, credentials or
+profile data. Checkpoints must contain game state only. Cloud adapters must
+authenticate and authorize the passed scope server-side on every request, and
+atomically deduplicate the operation ID **before** checking the expected cloud
+revision. A repeat ID with different request content must be rejected. Injected
+`operationId` functions must produce globally unique IDs across devices/tabs and
+restarts; the default is native `crypto.randomUUID()`.
+
+`load()` returns a detached checkpoint and a state. `ready` and `offline` permit
+staging; `incompatible`, `invalid-data`, `conflict` and `unavailable` block writes.
+`stage()` acknowledges a local commit with `stored`; it holds one active and one
+latest pending stage, immediately resolving displaced pending calls as
+`superseded`. `flush()` uploads one durable attempt, returning `saved`, `idle`,
+`not-ready`, `conflict`, `unavailable` or `disposed`. Await `stage()` first;
+flush during an unfinished stage returns `not-ready`. Concurrent load/flush
+calls share the active promise. There is no automatic network retry.
+
+An uncertain upload retains its ID, expected revision and checkpoint across
+restarts. A later explicit flush replays that exact attempt before sending newer
+staged progress. Acknowledgements preserve that newer progress. Local atomic
+compare-and-swap and cloud revision conflicts block further writes without
+selecting a winner. `exportRecovery()` returns bounded detached evidence for an
+explicit host recovery decision; never log it. Dispose clears in-memory recovery
+access and aborts pending calls, preserving stored data. An already committed
+server request cannot be undone by cancellation and remains scoped to its
+original account.
+
+Only explicit `migrate()` invokes a supplied migration keyed by
+`sourceRulesVersion/sourceContentVersion`. Reuse the game's `runtime.restore`
+validation in that callback and return its current checkpoint. Unknown versions,
+failed migrations and incompatible uncertain attempts remain preserved and
+blocked. A valid envelope alone does not validate game state or score authority.
+
+The native adapter uses IndexedDB database `plasius-game-recovery`, version 1,
+store `saves`, with compound account/game keys and strict-durability transactions.
+It acknowledges only transaction completion and never resets a future or broken
+database. No public offline cache or fallback stores account saves. Browser
+eviction, private browsing, device loss and user-cleared storage still apply;
+cloud acknowledgement is required for cross-device recovery. Account partitions
+prevent accidental cross-account access, not access by other scripts in the same
+origin; keep credentials and personal data out of these records.
+
+Recovery records are limited to 4 MiB UTF-8 in total, including JSON escaping and
+up to three checkpoint copies. Existing 1 MiB checkpoint and 256 KiB state limits
+also apply. Port deadlines default to 5 seconds and permit 10–30000 ms. Local and
+cloud calls each admit at most four unresolved operations, retaining slots when
+a provider ignores cancellation; cloud saturation leaves local staging available. The native
+adapter admits at most four active/unresolved opens and rejects excess work with
+`recovery-busy`. Timeout, unavailable/blocked storage, quota and abort failures
+never trigger deletion. Rollback disables new work through the host flag and
+preserves recovery records; no local environment override is provided.
 
 The host evaluates stored `arcade.runtime.enabled` and backend capabilities.
 There is no local/environment rollout override. Disabling the feature must
@@ -86,7 +168,8 @@ own approved analytics/NFR collection and privacy controls.
 Use Node from `.nvmrc`, then `npm ci`. Run `npm run typecheck`, `npm run lint`,
 `npm run test:coverage`, `npm run build`, `npm run pack:check` and `npm run audit:npm`.
 Tests and all coverage metrics must meet the 80% gate. ESM and CJS exports are
-built from the same source. Only the exact runtime distribution and public
+built from the same source. Build each entry sequentially after one clean to keep
+declarations self-contained and the packed path allowlist exact. Only the exact runtime distribution and public
 package metadata may enter the npm tarball; contributor records stay private.
 
 The schema template supplies legal/tooling/privacy controls and two-phase,
@@ -112,4 +195,7 @@ See [design](docs/design/runtime-foundation.md),
 [first-registration ADR](docs/adrs/adr-0002-one-time-first-publication.md),
 [bounds TDR](docs/tdrs/tdr-0001-input-and-checkpoint-bounds.md),
 [lifecycle boundaries](docs/design/runtime-reentrancy.md),
+[save recovery](docs/design/account-save-recovery.md),
+[save ADR](docs/adrs/adr-0003-account-save-recovery.md),
+[save bounds TDR](docs/tdrs/tdr-0003-save-journal-bounds.md),
 [contributing](CONTRIBUTING.md) and [security](SECURITY.md). Apache-2.0.

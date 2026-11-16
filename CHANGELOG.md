@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Add account-scoped save sessions and a lazy native IndexedDB adapter, with
+  atomic local revisions, coalesced stages, durable idempotent upload recovery,
+  explicit migrations, future/conflict preservation and bounded cancellation (#2).
 - Prepare an explicit first-registration path through main `cd.yml`/production,
   restricted to the approved initial arcade packages and confirmed registry
   absence, with a temporary isolated credential and mandatory OIDC handover (#3).
