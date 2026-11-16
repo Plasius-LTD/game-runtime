@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Prepare an explicit first-registration path through main `cd.yml`/production,
+  restricted to the approved initial arcade packages and confirmed registry
+  absence, with a temporary isolated credential and mandatory OIDC handover (#3).
 - Stop catch-up when a hook pauses or disposes the runtime, isolate interrupted
   state/random candidates, and bound nested operations and lifecycle callbacks
   with explicit errors and accurate completed-tick/time accounting (#1).

@@ -1,5 +1,25 @@
 # Foundation validation and dependency review
 
+## First-registration route — 16 November 2026
+
+Task #3 preparation adds no runtime dependency and changes no product API.
+The new workflow tests first failed because admission and the publication step
+were absent; the guard suite initially failed on its missing module. After
+implementation, 110 Vitest tests and 24 private-artifact tests pass. Combined
+Vitest coverage is 99.48% lines, 98.57% statements, 95.74% branches and 100%
+functions; the new release guard has all 14 statements covered and appears in
+LCOV alongside all four runtime sources. Thresholds remain 80% throughout.
+
+Typecheck, lint, ESM/CJS/declaration builds, public package checks, full npm
+audit (zero findings), and actionlint 1.7.12 for changed CD and existing CI pass.
+The candidate site audit accepts this exact guard/step and all ordinary release
+checks. Executable shell tests verify cleanup and refusal on guard, fetch,
+publication and stale-main failures. No credential was created and no bootstrap
+publication was executed for this preparation. Pushed CI and reviewed operator
+handover remain separate delivery gates. These checks do not qualify a game.
+
+## Initial foundation
+
 5 November 2026; Task #1. This evidence does not qualify a game or claim a package
 release. Node 24.18.0 and the schema template's npm/dual-module conventions apply.
 
