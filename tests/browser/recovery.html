@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game save recovery qualification</title>
+<link rel="icon" href="data:,">
+<script type="importmap">{"imports":{"@plasius/schema":"/schema/index.js"}}</script>
+<h1>Game save recovery qualification</h1>
+<p>This local test uses synthetic checkpoints and native IndexedDB.</p>
+<button id="run">Run recovery checks</button>
+<button id="reload">Verify persisted record after reload</button>
+<pre id="result" role="status">Ready</pre>
+<script type="module">
+import { createBrowserRecoveryStore } from "/dist/browser-recovery.js";
+import { createSaveSession } from "/dist/saves.js";
+const output = document.querySelector("#result");
+const databaseName = "plasius-recovery-browser-qualification";
+const identity = { gameId: "prism-breaker", rulesVersion: "1.0.0", contentVersion: "1.0.0" };
+const key = { scope: "qualification", gameId: identity.gameId };
+const signal = () => new AbortController().signal;
+const check = (condition, label) => { if (!condition) throw new Error(label); };
+const checkpoint = tick => ({ type: "gameCheckpoint", version: "1.0.0", ...identity, tick, randomState: 42,
+  stateJson: JSON.stringify({ score: tick }), players: [{ playerId: "p1", sequence: -1 }], pending: [] });
+const run = async () => {
+  const results = [];
+  const local = createBrowserRecoveryStore({ databaseName });
+  const second = createBrowserRecoveryStore({ databaseName });
+  try {
+    const old = await local.read(key, signal());
+    const saved = await local.write(key, old?.revision ?? null, { synthetic: true }, signal());
+    check(saved.status === "written", "initial commit");
+    check((await second.read(key, signal())).value.synthetic === true, "reopened connection");
+    check(await second.read({ ...key, scope: "another" }, signal()) === null, "account isolation");
+    const competing = await Promise.all([
+      local.write(key, saved.revision, { synthetic: true, winner: 1 }, signal()),
+      second.write(key, saved.revision, { synthetic: true, winner: 2 }, signal()),
+    ]);
+    check(competing.filter(value => value.status === "written").length === 1, "atomic concurrent write");
+    check(competing.filter(value => value.status === "conflict").length === 1, "concurrent conflict");
+    results.push("Native transactions, persistence and account isolation passed");
+
+    const scope = globalThis.crypto.randomUUID();
+    let remote = null;
+    let interrupted = true;
+    const attempts = new Map();
+    const calls = [];
+    const cloud = {
+      read: async () => remote,
+      write: async (account, attempt) => {
+        calls.push(structuredClone({ account, attempt }));
+        if (attempts.has(attempt.id)) return attempts.get(attempt.id);
+        if (attempt.expectedRevision !== (remote?.revision ?? null)) return { status: "conflict" };
+        const result = { status: "saved", revision: `r${attempts.size + 1}` };
+        remote = { revision: result.revision, checkpoint: attempt.checkpoint }; attempts.set(attempt.id, result);
+        if (interrupted) { interrupted = false; throw new Error("synthetic lost response"); }
+        return result;
+      },
+    };
+    let session = createSaveSession({ scope, identity, local, cloud });
+    await session.load(); check((await session.stage(checkpoint(1))).status === "stored", "stage");
+    check((await session.flush()).status === "unavailable", "unknown outcome");
+    await session.stage(checkpoint(2)); session.dispose();
+    session = createSaveSession({ scope, identity, local: second, cloud });
+    check((await session.load()).checkpoint.tick === 2, "latest local recovery");
+    check((await session.flush()).status === "saved", "idempotent replay");
+    check(JSON.stringify(calls[0]) === JSON.stringify(calls[1]), "identical retry request");
+    check((await session.flush()).status === "saved" && remote.checkpoint.tick === 2, "newer progress preserved");
+    session.dispose();
+    session = createSaveSession({ scope, identity, local, cloud });
+    check((await session.load()).checkpoint.tick === 2, "acknowledged recovery"); session.dispose();
+    results.push("Interrupted upload, exact replay and newer progress passed");
+
+    const persisted = await local.read(key, signal());
+    try { await local.write(key, persisted.revision, { shouldNotCommit: true }, AbortSignal.abort()); throw new Error("missing cancellation"); }
+    catch (error) { check(error.message === "recovery-cancelled", "bounded cancellation"); }
+    check((await local.read(key, signal())).value.synthetic === true, "cancel preserves data");
+    results.push("Cancellation preserves the previous commit");
+    output.textContent = `PASS\n${results.join("\n")}\n${navigator.userAgent}`;
+  } finally { local.dispose(); second.dispose(); }
+};
+document.querySelector("#run").addEventListener("click", () => {
+  output.textContent = "Running";
+  run().catch(error => { output.textContent = `FAIL: ${error.message}`; });
+});
+document.querySelector("#reload").addEventListener("click", async () => {
+  const local = createBrowserRecoveryStore({ databaseName });
+  try {
+    const result = await local.read(key, signal()); check(result?.value.synthetic === true, "record missing after reload");
+    output.textContent = "PASS: native IndexedDB record survived page reload";
+  } catch (error) { output.textContent = `FAIL: ${error.message}`; }
+  finally { local.dispose(); }
+});
+</script>
+</html>
