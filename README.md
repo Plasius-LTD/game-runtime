@@ -75,6 +75,81 @@ output must validate under the current rules. Unknown versions remain rejected.
 Keep the original checkpoint when restoration fails. A valid checkpoint is not
 proof of server authority or entitlement.
 
+## Browser controls and animation
+
+Task [#7](https://github.com/Plasius-LTD/game-runtime/issues/7) adds the lazy
+`/browser` subpath. Importing it or the root does not access browser globals.
+
+```ts
+const { createBrowserGameControls, createBrowserGameLoop } =
+  await import("@plasius/game-runtime/browser");
+const controls = createBrowserGameControls(aimingElement);
+const runtime = createGameRuntime(gameRules, {
+  seed: 42, players: ["p1"],
+  ports: {
+    sampleInput({ tick, players }) {
+      const intentions = controls.sample();
+      return players.map(({ playerId, sequence }) => ({
+        type: "gameInput", version: "1.0.0", tick, playerId, sequence: sequence + 1,
+        // This example game uses directional movement; target-based games map pointer instead.
+        axes: { ...intentions.direction, z: 0 }, buttons: intentions.buttons,
+      }));
+    },
+    render: (snapshot, alpha) => renderer.draw(snapshot, alpha),
+  },
+});
+const loop = createBrowserGameLoop(runtime, {
+  window, document,
+  onSuspend: reason => { controls.clear(); showResumeOrReconnect(reason); },
+  onError: code => showLocalGameError(code),
+});
+// Labelled native buttons provide touch, keyboard and assistive activation.
+launchButton.onclick = () => controls.pulse(1);
+leftButton.onclick = () => controls.nudge(-1, 0);
+startButton.onclick = () => loop.start();
+// On route/account teardown, release each owned adapter.
+loop.dispose(); controls.dispose(); runtime.dispose();
+```
+
+`sampleInput` runs synchronously before every actual simulation tick, including
+bounded catch-up, and never for discarded ticks. Context slots omit players with
+queued commands for that tick; `sequence` is the last committed watermark.
+Return at most one next-tick command per remaining slot. The existing schema,
+roster, sequence and queue bounds apply to the whole batch. Invalid or throwing
+samplers fault with `input-sampling-failed`, without committing the tick. Do not
+return a Promise. Omitted input remains neutral and replay inputs are preserved.
+Use this local sampler only for locally controlled slots; remote authority still
+validates authenticated commands through its transport and `enqueue` boundary.
+
+Controls return a detached absolute pointer target (or null), directional axes
+and button mask. One primary touch/mouse/pen owns the aiming surface until up,
+cancel or lost capture. X runs left-to-right and Y bottom-to-top. Arrows/WASD and
+Space apply only when the aiming surface itself has focus; child controls and
+browser shortcuts retain normal behavior. Quick Space presses and semantic
+`pulse` activations are coalesced for one tick. `nudge` accepts -1, 0 or 1 per
+axis. Focus loss, blur, hidden documents, `clear` and disposal discard intentions.
+
+The host must supply `tabindex`, a translated accessible name, visible focus,
+44 CSS-pixel semantic buttons, handedness/safe-area layout and non-drag controls.
+Set `touch-action` only on the aiming area; retain page zoom. Game-specific
+mapping must respect neutral missing inputs and use actual tick time for motion.
+
+The loop starts explicitly and owns one animation frame at a time. Hidden tabs,
+blur and pagehide pause **local simulation**, reset elapsed time and notify the
+host. Visible/focused again does not restart it. For online games, present the
+host's reconnect policy; this does not pause server authority. Stale cancelled
+frames are ignored. Invalid timestamps/runtime/scheduling failures stop with a
+bounded code and no retry. Notification callbacks cannot recursively restart.
+An optional `AbortSignal` disposes the loop. Dispose leaves the caller's runtime
+paused and does not delete saves or dispose external render/network resources.
+
+The [browser design](docs/design/browser-input-lifecycle.md),
+[ADR](docs/adrs/adr-0004-browser-input-lifecycle.md) and
+[bounds TDR](docs/tdrs/tdr-0004-browser-input-bounds.md) describe ownership/tests.
+After building, serve this repository locally and open `tests/browser/input.html`
+for native controls/frame checks. It uses synthetic state only; real device and
+gameplay qualification are separate. Keep artifacts in `output/playwright/`.
+
 ## Account save recovery
 
 Task [#2](https://github.com/Plasius-LTD/game-runtime/issues/2) adds independent

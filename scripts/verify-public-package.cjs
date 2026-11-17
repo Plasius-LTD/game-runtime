@@ -11,7 +11,7 @@ const {
 
 const EXPECTED_PACKAGE_FILES = Object.freeze(["dist"]);
 
-const ENTRY_NAMES = Object.freeze(["index", "saves", "browser-recovery"]);
+const ENTRY_NAMES = Object.freeze(["index", "saves", "browser-recovery", "browser"]);
 const EXPECTED_PACKED_PATHS = Object.freeze(["LICENSE", "README.md", "package.json", ...ENTRY_NAMES.flatMap(name =>
   ["js", "js.map", "cjs", "cjs.map", "d.ts", "d.cts"].map(extension => `dist/${name}.${extension}`))]);
 
@@ -130,6 +130,7 @@ function verifyPackageContents({ packageJson }, load = require) {
   const required = {
     index: ["createGameRuntime", "createRandom", "parseInput", "parseCheckpoint"],
     saves: ["createSaveSession"], "browser-recovery": ["createBrowserRecoveryStore"],
+    browser: ["createBrowserGameControls", "createBrowserGameLoop"],
   };
   for (const entry of ENTRY_NAMES) {
     const api = load(path.resolve(process.cwd(), `dist/${entry}.cjs`));

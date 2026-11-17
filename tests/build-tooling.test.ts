@@ -66,8 +66,8 @@ it("cleans stale output before rebuilding and never deletes the repository or it
   try {
     writeFileSync(join(output, "stale.js"), "stale output");
     await buildPackage(run, { outDir: output });
-    expect(run).toHaveBeenCalledTimes(3);
-    expect(run.mock.calls.map(call => (call as any[])[0])).toEqual(["index", "saves", "browser-recovery"]);
+    expect(run).toHaveBeenCalledTimes(4);
+    expect(run.mock.calls.map(call => (call as any[])[0])).toEqual(["index", "saves", "browser-recovery", "browser"]);
     const failure = vi.fn(async () => { throw new Error("entry build failed"); });
     await expect(buildPackage(failure, { outDir: output })).rejects.toThrow("entry build failed");
     expect(failure).toHaveBeenCalledOnce();
