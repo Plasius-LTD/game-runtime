@@ -199,3 +199,13 @@ See [design](docs/design/runtime-foundation.md),
 [save ADR](docs/adrs/adr-0003-account-save-recovery.md),
 [save bounds TDR](docs/tdrs/tdr-0003-save-journal-bounds.md),
 [contributing](CONTRIBUTING.md) and [security](SECURITY.md). Apache-2.0.
+
+## Release notes
+
+Add meaningful changes under `Unreleased`; the approved release pipeline alone
+promotes versioned sections. Preparation and the merged-main check reuse
+Schema's dependency-free `scripts/release-changelog.mjs`, reject placeholder or
+empty release notes, and preserve published history on retries. See the
+[release-note design](docs/design/release-notes.md) for the template revision
+and validation contract. The first-registration and permanent OIDC handover
+remain governed by the [publication route](docs/design/first-publication.md).
