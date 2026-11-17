@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Add atomic per-tick input sampling and a lazy browser adapter for single-owner
+  pointer controls, focused keyboard/semantic-button input and explicit-resume
+  animation lifecycle, with cancellation and stale-frame protection (#7).
 - Add account-scoped save sessions and a lazy native IndexedDB adapter, with
   atomic local revisions, coalesced stages, durable idempotent upload recovery,
   explicit migrations, future/conflict preservation and bounded cancellation (#2).
