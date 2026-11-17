@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game browser input qualification</title>
+<link rel="icon" href="data:,">
+<script type="importmap">{"imports":{"@plasius/schema":"/node_modules/@plasius/schema/dist/index.js"}}</script>
+<style>
+body { font: 18px system-ui; max-width: 50rem; margin: 2rem auto; padding: 1rem; }
+button { min-width: 44px; min-height: 44px; margin: .25rem; }
+#aim { width: 320px; height: 180px; border: 3px solid #334; background: #eef; touch-action: none; }
+:focus-visible { outline: 3px solid #055bc0; outline-offset: 4px; }
+pre { white-space: pre-wrap; }
+</style>
+<h1>Game browser input qualification</h1>
+<p>Local synthetic controls only. This is not a game or device qualification.</p>
+<div id="aim" tabindex="0" role="group" aria-label="Aiming region; arrows or WASD move, Space activates">Aim here</div>
+<button id="sample">Sample one tick</button><button id="action">Primary action</button>
+<button id="left">Nudge left</button><button id="start">Start local loop</button>
+<button id="stop">Pause local loop</button><button id="dispose">Dispose adapters</button>
+<label>Normal text input <input id="text"></label>
+<pre id="result" role="status">Loading</pre>
+<script type="module">
+import { createGameRuntime } from "/dist/index.js";
+import { createBrowserGameControls, createBrowserGameLoop } from "/dist/browser.js";
+const aim = document.querySelector("#aim");
+const output = document.querySelector("#result");
+const controls = createBrowserGameControls(aim);
+const evidence = { sampled: null, capture: 0, released: 0, suspensions: [], errors: [] };
+aim.addEventListener("gotpointercapture", () => evidence.capture++);
+aim.addEventListener("lostpointercapture", () => evidence.released++);
+const runtime = createGameRuntime({ gameId: "input-check", rulesVersion: "1.0.0", contentVersion: "1.0.0",
+  initialState: () => ({ ticks: 0, actions: 0 }), parseState: value => structuredClone(value),
+  step: (state, context) => ({ ticks: state.ticks + 1, actions: state.actions + Number(context.inputs.some(input => input.buttons === 1)) }),
+}, { seed: 1, players: ["p1"], ports: {
+  sampleInput({ tick, players }) {
+    const sample = controls.sample(); evidence.sampled = sample;
+    return players.map(({ playerId, sequence }) => ({ type: "gameInput", version: "1.0.0", tick, sequence: sequence + 1, playerId,
+      axes: { x: sample.direction.x, y: sample.direction.y, z: 0 }, buttons: sample.buttons }));
+  },
+  render: () => show(),
+} });
+function show() { output.textContent = JSON.stringify({ ...evidence, runtime: runtime.snapshot(), status: runtime.status() }, null, 2); }
+const loop = createBrowserGameLoop(runtime, { window, document,
+  onSuspend(reason) { controls.clear(); evidence.suspensions.push(reason); show(); },
+  onError(code) { evidence.errors.push(code); show(); },
+});
+document.querySelector("#sample").onclick = () => { evidence.sampled = controls.sample(); show(); };
+document.querySelector("#action").onclick = () => { controls.pulse(1); show(); };
+document.querySelector("#left").onclick = () => { controls.nudge(-1, 0); show(); };
+document.querySelector("#start").onclick = () => loop.start();
+document.querySelector("#stop").onclick = () => loop.stop();
+document.querySelector("#dispose").onclick = () => { loop.dispose(); controls.dispose(); show(); };
+window.inputQualification = { controls, loop, runtime, evidence, show };
+show();
+</script>
+</html>

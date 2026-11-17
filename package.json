@@ -25,10 +25,15 @@
       "types": "./dist/browser-recovery.d.ts",
       "import": "./dist/browser-recovery.js",
       "require": "./dist/browser-recovery.cjs"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js",
+      "require": "./dist/browser.cjs"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --clean && tsup src/saves.ts && tsup src/browser-recovery.ts",
+    "build": "tsup src/index.ts --clean && tsup src/saves.ts && tsup src/browser-recovery.ts && tsup src/browser.ts",
     "test": "vitest run && npm run test:privacy",
     "test:watch": "vitest",
     "test:privacy": "node --experimental-test-coverage --test-coverage-include=scripts/private-artifact-policy.cjs --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 --test tests/private-artifact-policy.test.cjs",
