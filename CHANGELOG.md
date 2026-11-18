@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Reuse Schema release-note preparation and validation, preserving authored
+  history and rejecting empty or placeholder release notes before publication.
+
 - Add account-scoped save sessions and a lazy native IndexedDB adapter, with
   atomic local revisions, coalesced stages, durable idempotent upload recovery,
   explicit migrations, future/conflict preservation and bounded cancellation (#2).
