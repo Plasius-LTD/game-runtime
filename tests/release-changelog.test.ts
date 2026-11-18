@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 // Repository-local tooling executes directly in Node without a TypeScript loader.
 // @ts-expect-error Release scripts have no public TypeScript declarations.
 import * as releaseChangelog from "../scripts/release-changelog.mjs";
@@ -106,6 +106,41 @@ describe("release preparation", () => {
 });
 
 describe("release-note command boundary", () => {
+  it("executes the entry guard and handles content and I/O failures without exposing input", async () => {
+    const script = fileURLToPath(new URL("../scripts/release-changelog.mjs", import.meta.url));
+    const dir = mkdtempSync(join(tmpdir(), "arcade-release-entry-"));
+    const originalArgv = process.argv;
+    const originalExitCode = process.exitCode;
+    const errors = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const execute = async (args: string[]) => {
+      process.argv = [process.execPath, script, ...args];
+      process.exitCode = undefined;
+      vi.resetModules();
+      // @ts-expect-error Repository-local release script has no public declarations.
+      await import("../scripts/release-changelog.mjs");
+    };
+    try {
+      const file = join(dir, "CHANGELOG.md");
+      writeFileSync(file, "## [Unreleased]\n\n- Retain authored notes.\n");
+      await execute(["check", file]);
+      expect(process.exitCode).toBeUndefined();
+      expect(errors).not.toHaveBeenCalled();
+      writeFileSync(file, "## [Unreleased]\n\n- (placeholder) private draft\n");
+      await execute(["check", file]);
+      expect(process.exitCode).toBe(1);
+      expect(errors).toHaveBeenLastCalledWith("CHANGELOG.md contains placeholder release-note text.");
+      await execute(["check", join(dir, "missing.md")]);
+      expect(process.exitCode).toBe(1);
+      expect(errors).toHaveBeenLastCalledWith("Unable to read or write the release changelog.");
+    } finally {
+      process.argv = originalArgv;
+      process.exitCode = originalExitCode;
+      errors.mockRestore();
+      vi.resetModules();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it("uses the canonical helper before staging and after reading main", () => {
     const workflow = readFileSync(new URL("../.github/workflows/release-prepare.yml", import.meta.url), "utf8");
     const prepare = workflow.indexOf('node scripts/release-changelog.mjs prepare');
