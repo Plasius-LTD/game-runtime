@@ -209,3 +209,19 @@ empty release notes, and preserve published history on retries. See the
 [release-note design](docs/design/release-notes.md) for the template revision
 and validation contract. The first-registration and permanent OIDC handover
 remain governed by the [publication route](docs/design/first-publication.md).
+
+## Build tooling
+
+The first-party build script uses exact-pinned esbuild and dts-bundle-generator
+with the installed TypeScript compiler. Explicit public entries build sequentially
+into independent ESM/CJS bundles, maps and self-contained declarations. Runtime
+dependencies stay external; optional browser/provider adapters remain separate.
+Legal comments are retained inline and the sealed package inventory is unchanged.
+See [ADR 0005](docs/adrs/adr-0005-build-tool-dependency-removal.md) and the
+[removal design](docs/design/build-tool-dependency-removal.md).
+
+The installed-code regression rejects the previous tsup dependency and embedded
+Picomatch in the selected builders. Remaining external test-tool dependencies
+still require the verified, published Plasius matcher replacement before the full
+dependency release gate can pass. No publication or OIDC handover is inferred
+from this build migration.
