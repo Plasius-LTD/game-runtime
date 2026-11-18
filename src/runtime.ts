@@ -18,11 +18,18 @@ export interface GameRules<S> extends GameIdentity {
   parseState(value: unknown): S;
   step(state: Readonly<S>, context: StepContext): S;
 }
+/** Slots lacking queued replay input for the next tick; sequences are committed watermarks. */
+export interface InputSampleContext {
+  readonly tick: number;
+  readonly players: readonly { readonly playerId: string; readonly sequence: number }[];
+}
 /**
  * Hooks are synchronous handoffs. Pause/resume/dispose end outstanding work;
  * nested advance/restore/checkpoint calls reject with runtime-busy. Hosts own I/O.
  */
 export interface RuntimePorts<S> {
+  /** Synchronous, bounded live input. Invalid batches fault without committing a tick. */
+  sampleInput?(context: InputSampleContext): readonly unknown[];
   render?(snapshot: GameSnapshot<S>, alpha: number): void;
   audio?(previous: GameSnapshot<S>, current: GameSnapshot<S>): void;
   checkpoint?(checkpoint: GameCheckpoint): void;
@@ -130,6 +137,31 @@ export function createGameRuntime<S>(rules: GameRules<S>, options: RuntimeOption
           const nextTick = tick + 1;
           if (!Number.isSafeInteger(nextTick)) { setStatus("faulted"); throw new RangeError("tick-overflow"); }
           const commands = queue.filter((entry) => entry.tick === nextTick);
+          if (ports.sampleInput) {
+            try {
+              const sampled = ports.sampleInput({ tick: nextTick, players: players
+                .filter((playerId) => !commands.some((entry) => entry.playerId === playerId))
+                .map((playerId) => ({ playerId, sequence: sequences.get(playerId)! })) });
+              if (!continuing()) break;
+              if (!Array.isArray(sampled)) {
+                if (sampled instanceof Promise) void sampled.catch(() => {});
+                throw new TypeError();
+              }
+              if (sampled.length > players.length) throw new TypeError();
+              const pending = [...queue];
+              for (const raw of sampled) {
+                const command = parseInput(raw);
+                if (command.tick !== nextTick || checkInput(command, pending, sequences, tick) !== "accepted") throw new TypeError();
+                pending.push(command); commands.push(command);
+              }
+              commands.sort(compare);
+              if (!continuing()) break;
+            } catch {
+              queue = []; accumulator = 0;
+              if (!isDisposed()) setStatus("faulted");
+              throw new Error("input-sampling-failed");
+            }
+          }
           const previous = ports.audio ? snapshot() : undefined;
           const candidateRandom = createRandom(random.state());
           let candidateState: S;
