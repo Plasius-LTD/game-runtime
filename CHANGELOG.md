@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Refresh supported npm dependency and security tooling baselines; preserve runtime API contracts (weekly maintenance, 2026-11-22).
+
 - Reuse Schema release-note preparation and validation, preserving authored
   history and rejecting empty or placeholder release notes before publication.
 
