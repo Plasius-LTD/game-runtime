@@ -5,7 +5,9 @@ import { fileURLToPath } from "node:url";
 import { runFirstPublication, verifyFirstPublication } from "../scripts/verify-first-publication.mjs";
 
 const sha = "a".repeat(40);
+const descriptor = { repository: "Plasius-LTD/game-runtime", packageName: "@plasius/game-runtime", version: "0.1.0" };
 const valid = {
+  descriptor,
   repository: "Plasius-LTD/game-runtime",
   packageName: "@plasius/game-runtime",
   version: "0.1.0",
@@ -22,7 +24,7 @@ const valid = {
 describe("one-time arcade package registration", () => {
   it.each(["game-runtime", "game-multiplayer", "arcade-games"])("admits only absent %s 0.1.0 from its exact main CD", async name => {
     const registry = vi.fn().mockResolvedValue({ status: 404 });
-    await verifyFirstPublication({ ...valid, repository: `Plasius-LTD/${name}`, packageName: `@plasius/${name}`,
+    await verifyFirstPublication({ ...valid, descriptor: { ...descriptor, repository: `Plasius-LTD/${name}`, packageName: `@plasius/${name}` }, repository: `Plasius-LTD/${name}`, packageName: `@plasius/${name}`,
       workflowRef: `Plasius-LTD/${name}/.github/workflows/cd.yml@refs/heads/main` }, registry);
     expect(registry).toHaveBeenCalledExactlyOnceWith(`https://registry.npmjs.org/@plasius%2f${name}`, {
       signal: expect.any(AbortSignal), redirect: "error", headers: { accept: "application/json" },
@@ -61,28 +63,28 @@ describe("one-time arcade package registration", () => {
     const verify = vi.fn().mockResolvedValue(undefined);
     const report = vi.fn();
     const env = { GITHUB_REPOSITORY: valid.repository, PACKAGE_NAME: valid.packageName, PACKAGE_VERSION: valid.version,
-      FIRST_PUBLICATION: "true", NPM_BOOTSTRAP_CREDENTIAL: "synthetic-test-credential", GITHUB_REF: valid.ref,
+      FIRST_PUBLICATION: "true", NPM_TOKEN: "synthetic-test-credential", GITHUB_REF: valid.ref,
       GITHUB_WORKFLOW_REF: valid.workflowRef, GITHUB_EVENT_NAME: valid.eventName, EXPECTED_SHA: sha, ACTUAL_SHA: sha, GITHUB_SHA: sha };
-    expect(await runFirstPublication(env, verify, report)).toBe(0);
+    expect(await runFirstPublication(env, { verify, report, readDescriptor: () => descriptor })).toBe(0);
     expect(verify).toHaveBeenCalledExactlyOnceWith(valid);
     expect(report).not.toHaveBeenCalled();
     verify.mockRejectedValue(new Error("synthetic private registry detail"));
-    expect(await runFirstPublication(env, verify, report)).toBe(1);
-    expect(report).toHaveBeenCalledExactlyOnceWith("First-publication verification failed; check approved admission and registry absence.\n");
+    expect(await runFirstPublication(env, { verify, report, readDescriptor: () => descriptor })).toBe(1);
+    expect(report).toHaveBeenCalledExactlyOnceWith("First-publication verification failed; check enrollment, exact main and registry absence.\n");
   });
 
   it("runs the actual CLI boundary without network when the managed credential is absent", async () => {
     const argv = process.argv;
     const exitCode = process.exitCode;
     const stderr = vi.spyOn(process.stderr, "write").mockReturnValue(true);
-    vi.stubEnv("NPM_BOOTSTRAP_CREDENTIAL", "");
+    vi.stubEnv("NPM_TOKEN", "");
     process.argv = [process.execPath, fileURLToPath(new URL("../scripts/verify-first-publication.mjs", import.meta.url))];
     try {
       vi.resetModules();
       // @ts-expect-error Exercise the dependency-free JavaScript CLI entry point.
       await import("../scripts/verify-first-publication.mjs");
       expect(process.exitCode).toBe(1);
-      expect(stderr).toHaveBeenCalledExactlyOnceWith("First-publication verification failed; check approved admission and registry absence.\n");
+      expect(stderr).toHaveBeenCalledExactlyOnceWith("First-publication verification failed; check enrollment, exact main and registry absence.\n");
     } finally {
       process.argv = argv; process.exitCode = exitCode; stderr.mockRestore(); vi.unstubAllEnvs();
     }

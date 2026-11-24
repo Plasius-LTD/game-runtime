@@ -1,5 +1,8 @@
 # One-time first publication through approved CD
 
+> Registration mechanics are superseded by the [shared Schema design](shared-first-registration.md)
+> under Task #17. Historical secret names below are not operator instructions.
+
 Work: game-runtime #3, site Story #2416 / Feature #2384 / Epic #2382.
 The owner approved preparation of this route on 16 November 2026. Credential
 creation and publication remain separate operator actions after review.
