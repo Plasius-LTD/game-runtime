@@ -1,4 +1,4 @@
-# ADR 0004: Browser lifecycle with fixed-tick input sampling
+# ADR 0006: Browser lifecycle with fixed-tick input sampling
 
 Status: accepted for implementation. Date: 17 November 2026.
 Work: game-runtime #7; site Feature #2384 / Story #2416 / Epic #2382.

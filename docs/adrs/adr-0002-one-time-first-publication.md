@@ -1,5 +1,8 @@
 # ADR 0002: One-time first publication through existing CD
 
+> Registration mechanics are superseded by the [shared Schema design](../design/shared-first-registration.md)
+> under Task #17. Historical secret names below are not operator instructions.
+
 Status: Accepted for preparation; credential setup and publication await the
 operator action recorded in Task #3. Owner approval: 16 November 2026.
 Parent: site Feature #2384 / Story #2416; stored `arcade.runtime.enabled` stays

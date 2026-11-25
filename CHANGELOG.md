@@ -11,6 +11,9 @@
   and the exact packed inventory; external test-tool removal remains tracked
   separately (#13).
 
+- Adopt the shared Schema first-registration template with the standard temporary
+  `NPM_TOKEN`, exact enrollment and subsequent tokenless OIDC handover (#17).
+
 - Reuse Schema release-note preparation and validation, preserving authored
   history and rejecting empty or placeholder release notes before publication.
 

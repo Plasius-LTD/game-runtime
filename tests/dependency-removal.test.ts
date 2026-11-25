@@ -33,4 +33,3 @@ it("uses the verified Plasius adapter for every matcher resolution without origi
       `${path} contains an original or embedded Picomatch implementation`).toBe(false);
   }
 });
-

@@ -66,7 +66,12 @@ describe("release workflow trust boundaries", () => {
     expect(cdWorkflow).toContain("id-token: write");
     expect(cdWorkflow).toContain("--provenance");
     expect(cdWorkflow).toContain("npm publish");
-    expect(cdWorkflow).not.toContain("NPM_TOKEN");
+    const marker = "\n      - name: Register new package with standard npm credential\n";
+    const registration = cdWorkflow.split(marker)[1]?.split("\n      - name:")[0];
+    expect(registration).toBeTruthy();
+    expect(registration).toContain("NPM_TOKEN: ${{ secrets.NPM_TOKEN }}");
+    expect(cdWorkflow.replace(marker + registration, "")).not.toContain("NPM_TOKEN");
+    expect(cdWorkflow).not.toContain("NPM_BOOTSTRAP_TOKEN");
     expect(cdWorkflow).not.toContain("NODE_AUTH_TOKEN");
     expect(npmConfig).not.toContain("_authToken");
     expect(npmConfig).not.toContain("NODE_AUTH_TOKEN");
@@ -94,7 +99,7 @@ describe("release workflow trust boundaries", () => {
     const publishJob = cdWorkflow.slice(cdWorkflow.indexOf("\n  publish:"));
     const install = publishJob.indexOf("npm install --global npm@11.6.2 --ignore-scripts --registry https://registry.npmjs.org");
     expect(install).toBeGreaterThan(-1);
-    expect(publishJob.indexOf("- name: Verify release runtime")).toBeGreaterThan(install);
+    expect(publishJob.indexOf('ACTUAL_NPM="$(npm --version)"')).toBeGreaterThan(install);
     expect(publishJob).toContain('"${EXPECTED_NODE}" != "24.18.0"');
     const guard = publishJob.match(/node - "\$\{ACTUAL_NPM\}" <<'NODE'\n([\s\S]*?)\n\s+NODE/u)?.[1];
     expect(guard).toBeDefined();
