@@ -220,8 +220,12 @@ Legal comments are retained inline and the sealed package inventory is unchanged
 See [ADR 0005](docs/adrs/adr-0005-build-tool-dependency-removal.md) and the
 [removal design](docs/design/build-tool-dependency-removal.md).
 
-The installed-code regression rejects the previous tsup dependency and embedded
-Picomatch in the selected builders. Remaining external test-tool dependencies
-still require the verified, published Plasius matcher replacement before the full
-dependency release gate can pass. No publication or OIDC handover is inferred
-from this build migration.
+The dependency override resolves upstream `picomatch` imports to the verified
+published `@plasius/glob@1.0.2` adapter with its exact Minimatch 11.0.9 engine.
+That upstream module name remains for compatibility; the installed package,
+integrity and implementation identify Plasius. Regression checks reject the
+original dependency and embedded implementations across all installed code.
+The adapter intentionally rejects `makeRe()`; keep custom Vite `assetsInclude`
+filters as reviewed RegExp values, not glob strings. Complete discovery, coverage,
+build and packed-consumer checks remain required. Publication and OIDC handover
+still use the approved release workflow.

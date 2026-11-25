@@ -52,3 +52,22 @@ The first catalogue CI run reproduced missing optional `@emnapi/core` and
 Regenerate through npm, then verify `npm ci --no-fund --no-audit
 --legacy-peer-deps` from the resulting lock. Do not hand-edit resolved packages
 or omit optional dependencies to mask a portability failure.
+
+## Verified public adapter adoption — 25 November 2026
+
+Approved Glob CD 45586343662 published 1.0.2 from immutable main
+`c345169a6bd3e23c754e6a3fa77191179660b2a7`. Public tarball SHA-512, its eight-file
+inventory, exact source/workflow/run provenance, registry signatures/attestations
+and isolated callable ESM/CJS consumers passed independent verification.
+
+Use `npm:@plasius/glob@1.0.2` for upstream Picomatch imports, together with exact
+Minimatch 11.0.9. The alias is only module resolution; regressions require the
+actual Plasius identity/version/integrity and reject original registry resolutions,
+installed original identities and embedded implementations across all code/maps.
+No original package directory is excluded from this scan. The adapter's
+`makeRe()` remains explicitly unsupported; this package has no custom Vite asset
+glob filters. Preserve current test discovery byte-for-byte apart from the added
+dependency regression, then run complete coverage, types/lint/build, full audit,
+strict packed consumers and exact-source CI. Verify a normal clean install with
+all peers, not only CI's legacy peer-resolution mode. No product runtime API or
+release-security path changes in this adoption.

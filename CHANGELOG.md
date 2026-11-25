@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Replace remaining external Picomatch implementations with the verified public
+  Plasius Glob 1.0.2 adapter and its exact Minimatch 11.0.9 engine. Validate all
+  installed package identities/code and preserve complete test discovery (#13).
+
 - Replace tsup's embedded Picomatch build dependency with direct esbuild and
   TypeScript declaration generation, preserving independent public entry formats
   and the exact packed inventory; external test-tool removal remains tracked

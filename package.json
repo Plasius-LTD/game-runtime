@@ -65,14 +65,14 @@
     "@typescript-eslint/eslint-plugin": "^8.64.0",
     "@typescript-eslint/parser": "^8.64.0",
     "@vitest/coverage-v8": "^4.1.10",
+    "dts-bundle-generator": "10.0.0",
+    "esbuild": "0.28.2",
     "eslint": "^10.7.0",
     "fake-indexeddb": "6.2.8",
     "globals": "^17.7.0",
     "tsx": "^4.23.1",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.10",
-    "esbuild": "0.28.2",
-    "dts-bundle-generator": "10.0.0"
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public"
@@ -90,7 +90,8 @@
   "overrides": {
     "brace-expansion": "^5.0.9",
     "esbuild": "$esbuild",
-    "minimatch": "11.0.1"
+    "minimatch": "11.0.9",
+    "picomatch": "npm:@plasius/glob@1.0.2"
   },
   "engines": {
     "node": ">=24"
