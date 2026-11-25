@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Retire verified first-registration enrollment and require ordinary npm Trusted
+  Publishing, with a real-checkout regression preventing accidental re-enrollment (#17).
+
 ## [0.1.0] - 2026-11-25
 
 - Replace remaining external Picomatch implementations with the verified public
