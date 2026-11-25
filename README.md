@@ -229,3 +229,14 @@ The adapter intentionally rejects `makeRe()`; keep custom Vite `assetsInclude`
 filters as reviewed RegExp values, not glob strings. Complete discovery, coverage,
 build and packed-consumer checks remain required. Publication and OIDC handover
 still use the approved release workflow.
+
+## Package registration and trusted publishing
+
+The release workflow follows the shared `@plasius/schema` template. The reviewed
+enrollment allows only `@plasius/game-runtime@0.1.0` through main `cd.yml` and the
+`production` environment, using the standard temporary `NPM_TOKEN`. The default
+release path remains OIDC. No package-specific secret is introduced. See the
+[registration design](docs/design/shared-first-registration.md) and
+[ADR 0004](docs/adrs/adr-0004-shared-schema-registration.md) for exact admission, credential cleanup
+and the verified OIDC handover. Publication remains incomplete until CD and npm
+registry integrity are verified.
