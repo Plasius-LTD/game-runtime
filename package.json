@@ -28,7 +28,7 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --clean && tsup src/saves.ts && tsup src/browser-recovery.ts",
+    "build": "node scripts/build-package.mjs",
     "test": "vitest run && npm run test:privacy",
     "test:watch": "vitest",
     "test:privacy": "node --experimental-test-coverage --test-coverage-include=scripts/private-artifact-policy.cjs --test-coverage-lines=80 --test-coverage-functions=80 --test-coverage-branches=80 --test tests/private-artifact-policy.test.cjs",
@@ -68,10 +68,11 @@
     "@typescript-eslint/eslint-plugin": "^8.64.0",
     "@typescript-eslint/parser": "^8.64.0",
     "@vitest/coverage-v8": "^4.1.10",
+    "dts-bundle-generator": "10.0.0",
+    "esbuild": "0.28.2",
     "eslint": "^10.7.0",
     "fake-indexeddb": "6.2.8",
     "globals": "^17.7.0",
-    "tsup": "^8.5.1",
     "tsx": "^4.23.1",
     "typescript": "^6.0.3",
     "vitest": "^4.1.10"
@@ -91,8 +92,9 @@
   ],
   "overrides": {
     "brace-expansion": "^5.0.9",
-    "esbuild": "^0.28.1",
-    "minimatch": "11.0.1"
+    "esbuild": "$esbuild",
+    "minimatch": "11.0.9",
+    "picomatch": "npm:@plasius/glob@1.0.2"
   },
   "engines": {
     "node": ">=24"

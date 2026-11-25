@@ -210,6 +210,26 @@ empty release notes, and preserve published history on retries. See the
 and validation contract. The first-registration and permanent OIDC handover
 remain governed by the [publication route](docs/design/first-publication.md).
 
+## Build tooling
+
+The first-party build script uses exact-pinned esbuild and dts-bundle-generator
+with the installed TypeScript compiler. Explicit public entries build sequentially
+into independent ESM/CJS bundles, maps and self-contained declarations. Runtime
+dependencies stay external; optional browser/provider adapters remain separate.
+Legal comments are retained inline and the sealed package inventory is unchanged.
+See [ADR 0005](docs/adrs/adr-0005-build-tool-dependency-removal.md) and the
+[removal design](docs/design/build-tool-dependency-removal.md).
+
+The dependency override resolves upstream `picomatch` imports to the verified
+published `@plasius/glob@1.0.2` adapter with its exact Minimatch 11.0.9 engine.
+That upstream module name remains for compatibility; the installed package,
+integrity and implementation identify Plasius. Regression checks reject the
+original dependency and embedded implementations across all installed code.
+The adapter intentionally rejects `makeRe()`; keep custom Vite `assetsInclude`
+filters as reviewed RegExp values, not glob strings. Complete discovery, coverage,
+build and packed-consumer checks remain required. Publication and OIDC handover
+still use the approved release workflow.
+
 ## Package registration and trusted publishing
 
 The release workflow follows the shared `@plasius/schema` template. The reviewed
