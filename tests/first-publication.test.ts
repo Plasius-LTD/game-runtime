@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import { fileURLToPath } from "node:url";
+import { existsSync, readFileSync } from "node:fs";
 // Dependency-free release tooling deliberately runs without a TypeScript loader.
 // @ts-expect-error Repository-local release script has no public declarations.
-import { runFirstPublication, verifyFirstPublication } from "../scripts/verify-first-publication.mjs";
+import { readFirstPublicationDescriptor, runFirstPublication, verifyFirstPublication } from "../scripts/verify-first-publication.mjs";
 
 const sha = "a".repeat(40);
 const descriptor = { repository: "Plasius-LTD/game-runtime", packageName: "@plasius/game-runtime", version: "0.1.0" };
@@ -22,6 +23,22 @@ const valid = {
 };
 
 describe("one-time arcade package registration", () => {
+  it("refuses retired enrollment before verification despite an explicit valid opt-in", async () => {
+    const file = fileURLToPath(new URL("../.github/npm-first-publication.json", import.meta.url));
+    expect(existsSync(file)).toBe(false);
+    const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+    const repository = `Plasius-LTD/${manifest.name.slice("@plasius/".length)}`;
+    const env = { GITHUB_REPOSITORY: repository, PACKAGE_NAME: manifest.name, PACKAGE_VERSION: manifest.version,
+      FIRST_PUBLICATION: "true", NPM_TOKEN: "synthetic-test-credential", GITHUB_REF: valid.ref,
+      GITHUB_WORKFLOW_REF: `${repository}/.github/workflows/cd.yml@refs/heads/main`,
+      GITHUB_EVENT_NAME: valid.eventName, EXPECTED_SHA: sha, ACTUAL_SHA: sha, GITHUB_SHA: sha };
+    const verify = vi.fn();
+    const report = vi.fn();
+    expect(await runFirstPublication(env, { readDescriptor: () => readFirstPublicationDescriptor(file), verify, report })).toBe(1);
+    expect(verify).not.toHaveBeenCalled();
+    expect(report).toHaveBeenCalledExactlyOnceWith("First-publication verification failed; check enrollment, exact main and registry absence.\n");
+  });
+
   it.each(["game-runtime", "game-multiplayer", "arcade-games"])("admits only absent %s 0.1.0 from its exact main CD", async name => {
     const registry = vi.fn().mockResolvedValue({ status: 404 });
     await verifyFirstPublication({ ...valid, descriptor: { ...descriptor, repository: `Plasius-LTD/${name}`, packageName: `@plasius/${name}` }, repository: `Plasius-LTD/${name}`, packageName: `@plasius/${name}`,

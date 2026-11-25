@@ -180,15 +180,13 @@ publisher, release-preparation App and protected-branch-only `production`
 environment. Publish only via approved `cd.yml` on `main`; never publish locally.
 CD pins npm 11.6.2, validates Node 24.18.0 and npm >=11.5.1, and rechecks current
 main before release mutation and again immediately before npm publication.
-First registration remains gated by [Task #3](https://github.com/Plasius-LTD/game-runtime/issues/3);
-the reviewed, default-off `first_publication` input permits only the initial
-`0.1.0` registration after an anonymous registry request confirms absence.
-The [first-publication design](docs/design/first-publication.md) describes the
-temporary production credential, isolated sealed-artifact publication, required
-owner action and permanent OIDC handover. Normal releases remain OIDC-only.
-Credential creation and publication require the final operator step; approval
-to prepare the route alone does not authorize either action.
-No publication or ten-hour game qualification is claimed by this foundation.
+Initial version `0.1.0` is published and verified under
+[Task #17](https://github.com/Plasius-LTD/game-runtime/issues/17). Its enrollment is
+retired; subsequent releases require the exact trusted publisher and ordinary
+OIDC. The [shared registration design](docs/design/shared-first-registration.md)
+records the completed registration and the remaining handover/credential cleanup
+checks. The [earlier design](docs/design/first-publication.md) retains historical
+context. Package publication does not establish ten-hour game qualification.
 
 See [design](docs/design/runtime-foundation.md),
 [ADR 0001](docs/adrs/adr-0001-deterministic-headless-game-runtime.md),
@@ -232,11 +230,12 @@ still use the approved release workflow.
 
 ## Package registration and trusted publishing
 
-The release workflow follows the shared `@plasius/schema` template. The reviewed
-enrollment allows only `@plasius/game-runtime@0.1.0` through main `cd.yml` and the
-`production` environment, using the standard temporary `NPM_TOKEN`. The default
-release path remains OIDC. No package-specific secret is introduced. See the
+The release workflow follows the shared `@plasius/schema` template. Initial
+registration of `@plasius/game-runtime@0.1.0` is verified and its enrollment
+descriptor is retired. Releases use main `cd.yml`, the `production` environment
+and npm Trusted Publishing through OIDC. Ordinary releases do not use `NPM_TOKEN`;
+an explicit first-registration request now fails before registry access. See the
 [registration design](docs/design/shared-first-registration.md) and
 [ADR 0004](docs/adrs/adr-0004-shared-schema-registration.md) for exact admission, credential cleanup
-and the verified OIDC handover. Publication remains incomplete until CD and npm
+and the OIDC handover checks. Each release remains incomplete until CD and npm
 registry integrity are verified.
