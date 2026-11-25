@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-25
+
 - Replace remaining external Picomatch implementations with the verified public
   Plasius Glob 1.0.2 adapter and its exact Minimatch 11.0.9 engine. Validate all
   installed package identities/code and preserve complete test discovery (#13).
@@ -33,3 +35,6 @@
   checkpoint restoration with explicit rules/content migrations (#1).
 - Establish schema-template legal, privacy, dual-module packaging, coverage and
   governed CI/CD controls. Public arcade launch remains independently gated.
+
+[Unreleased]: https://github.com/Plasius-LTD/game-runtime/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Plasius-LTD/game-runtime/releases/tag/v0.1.0
