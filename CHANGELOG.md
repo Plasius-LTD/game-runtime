@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Add atomic per-tick input sampling and a lazy browser adapter for single-owner
+  pointer controls, focused keyboard/semantic-button input and explicit-resume
+  animation lifecycle, with cancellation and stale-frame protection (#7).
+
+## [0.1.0] - 2026-11-25
+
 - Replace remaining external Picomatch implementations with the verified public
   Plasius Glob 1.0.2 adapter and its exact Minimatch 11.0.9 engine. Validate all
   installed package identities/code and preserve complete test discovery (#13).
@@ -17,9 +23,6 @@
 - Reuse Schema release-note preparation and validation, preserving authored
   history and rejecting empty or placeholder release notes before publication.
 
-- Add atomic per-tick input sampling and a lazy browser adapter for single-owner
-  pointer controls, focused keyboard/semantic-button input and explicit-resume
-  animation lifecycle, with cancellation and stale-frame protection (#7).
 - Add account-scoped save sessions and a lazy native IndexedDB adapter, with
   atomic local revisions, coalesced stages, durable idempotent upload recovery,
   explicit migrations, future/conflict preservation and bounded cancellation (#2).
@@ -36,3 +39,6 @@
   checkpoint restoration with explicit rules/content migrations (#1).
 - Establish schema-template legal, privacy, dual-module packaging, coverage and
   governed CI/CD controls. Public arcade launch remains independently gated.
+
+[Unreleased]: https://github.com/Plasius-LTD/game-runtime/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Plasius-LTD/game-runtime/releases/tag/v0.1.0
