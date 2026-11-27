@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- Add atomic per-tick input sampling and a lazy browser adapter for single-owner
+  pointer controls, focused keyboard/semantic-button input and explicit-resume
+  animation lifecycle, with cancellation and stale-frame protection (#7).
+
 ## [0.1.0] - 2026-11-25
 
 - Replace remaining external Picomatch implementations with the verified public

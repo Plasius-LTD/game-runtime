@@ -5,3 +5,4 @@
 - [adr-0003-account-save-recovery](adr-0003-account-save-recovery.md)
 - [ADR 0004: Shared Schema registration](adr-0004-shared-schema-registration.md)
 - [ADR 0005: Build tool dependency removal](adr-0005-build-tool-dependency-removal.md)
+- [ADR 0006: Browser input and lifecycle](adr-0006-browser-input-lifecycle.md)

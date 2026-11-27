@@ -7,14 +7,14 @@ const require = createRequire(import.meta.url);
 const pack = vi.spyOn(childProcess, "execFileSync");
 const { EXPECTED_PACKED_PATHS, verifyPackageContents, verifyPackagePathInventory, main } = require("../scripts/verify-public-package.cjs");
 const manifest = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
-const exports = { createGameRuntime() {}, createRandom() {}, parseInput() {}, parseCheckpoint() {}, createSaveSession() {}, createBrowserRecoveryStore() {} };
+const exports = { createGameRuntime() {}, createRandom() {}, parseInput() {}, parseCheckpoint() {}, createSaveSession() {}, createBrowserRecoveryStore() {}, createBrowserGameControls() {}, createBrowserGameLoop() {} };
 
 describe("independent dual-module package entry policy", () => {
   it("requires exact self-contained runtime, saves and browser entries", () => {
-    expect(EXPECTED_PACKED_PATHS).toHaveLength(21);
+    expect(EXPECTED_PACKED_PATHS).toHaveLength(27);
     verifyPackagePathInventory(EXPECTED_PACKED_PATHS);
     verifyPackageContents({ packageJson: manifest }, () => exports);
-    for (const key of [".", "./saves", "./browser-recovery"]) {
+    for (const key of [".", "./saves", "./browser-recovery", "./browser"]) {
       const changed = structuredClone(manifest); delete changed.exports[key];
       expect(() => verifyPackageContents({ packageJson: changed }, () => exports)).toThrow("exports are incorrect");
     }
@@ -30,7 +30,7 @@ describe("independent dual-module package entry policy", () => {
   it("checks npm's actual inventory contract, module loading and failure cleanup", () => {
     const load = (Module as any)._load;
     const loader = vi.spyOn(Module as any, "_load").mockImplementation((...args: any[]) =>
-      /\/dist\/(index|saves|browser-recovery)\.cjs$/.test(args[0]) ? exports : load(...args));
+      /\/dist\/(index|saves|browser-recovery|browser)\.cjs$/.test(args[0]) ? exports : load(...args));
     const inventory = JSON.stringify([{ files: EXPECTED_PACKED_PATHS.map((path: string) => ({ path })) }]);
     const remove = vi.spyOn(fs, "rmSync").mockImplementation(() => {});
     try {
